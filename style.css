@@ -264,6 +264,26 @@ main::-webkit-scrollbar { width: 0; }
 .section--origins.is-active {
   align-items: center;
 }
+
+/* Selection / Adaptation 文字区域加柔和暗化蒙版，提升可读性，边缘仍透粒子 */
+.section--selection::before,
+.section--adaptation::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 50%,
+      rgba(10, 15, 31, .72) 0%,
+      rgba(10, 15, 31, .55) 40%,
+      rgba(10, 15, 31, 0) 85%);
+  z-index: 0;
+}
+.section--selection > *,
+.section--adaptation > * {
+  position: relative;
+  z-index: 1;
+}
 @keyframes section-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
