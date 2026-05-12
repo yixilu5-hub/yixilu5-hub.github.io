@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mu's Planet</title>
+  <meta name="description" content="Mu's Planet —— 行为与实验经济学博士生的个人数字主页">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 全局共享 SVG 资源（filter / defs） -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <!-- 手绘抖动 filter：让线条有水彩/纸笔感 -->
+      <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="2" seed="3"/>
+        <feDisplacementMap in="SourceGraphic" scale="1.4"/>
+      </filter>
+      <filter id="rough-strong" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="7"/>
+        <feDisplacementMap in="SourceGraphic" scale="2.2"/>
+      </filter>
+      <!-- 纸张噪点 overlay -->
+      <filter id="paper-grain">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="5"/>
+        <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.08 0"/>
+      </filter>
+      <!-- 暖光 glow (降饱和琥珀) -->
+      <radialGradient id="warm-glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"  stop-color="#e8b870" stop-opacity="0.85"/>
+        <stop offset="60%" stop-color="#c89858" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="#c89858" stop-opacity="0"/>
+      </radialGradient>
+      <!-- 玫瑰色 glow -->
+      <radialGradient id="rose-glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"  stop-color="#f78bb2" stop-opacity="0.85"/>
+        <stop offset="100%" stop-color="#f78bb2" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+  </svg>
+
+  <!-- 纸张噪点层（极轻） -->
+  <div id="grain" aria-hidden="true"></div>
+
+  <!-- 混沌粒子背景层 (canvas) -->
+  <canvas id="particles" aria-hidden="true"></canvas>
+
+  <!-- 背景音乐 -->
+  <audio id="bgm" src="darwi.mp3" loop preload="auto"></audio>
+
+  <!-- 黑胶留声机 (右上角) -->
+  <button id="vinyl" class="vinyl" type="button" aria-label="Toggle music" aria-pressed="false">
+    <svg class="vinyl__svg" viewBox="0 0 80 80" width="64" height="64">
+      <!-- 唱片外圈 -->
+      <circle cx="40" cy="40" r="38" fill="#0d0d10" stroke="#2a2a30" stroke-width="0.5"/>
+      <!-- 沟槽（同心圆，半透明） -->
+      <g fill="none" stroke="#3a3a44" stroke-width="0.3" opacity="0.6">
+        <circle cx="40" cy="40" r="34"/>
+        <circle cx="40" cy="40" r="30"/>
+        <circle cx="40" cy="40" r="26"/>
+        <circle cx="40" cy="40" r="22"/>
+        <circle cx="40" cy="40" r="18"/>
+      </g>
+      <!-- 高光反射 -->
+      <path d="M 12 28 A 38 38 0 0 1 52 8" fill="none" stroke="#4a4a55" stroke-width="0.6" opacity="0.5"/>
+      <!-- 中心标签（暖玫瑰色） -->
+      <circle cx="40" cy="40" r="13" fill="#c45b7a"/>
+      <circle cx="40" cy="40" r="13" fill="none" stroke="#e88aa8" stroke-width="0.4" opacity="0.6"/>
+      <text x="40" y="38" text-anchor="middle" fill="#fde8d8" font-size="3.2" font-family="serif" font-style="italic">DARWIN</text>
+      <text x="40" y="44" text-anchor="middle" fill="#fde8d8" font-size="2" font-family="serif" opacity="0.7">— mu's planet —</text>
+      <!-- 中心孔 -->
+      <circle cx="40" cy="40" r="1.4" fill="#0a0f1f"/>
+    </svg>
+    <span class="vinyl__hint">darwin</span>
+  </button>
+
+  <!-- 点灯人侧边栏 (右侧纵向) -->
+  <nav id="lamplighter" class="lamplighter" aria-label="Section navigation">
+    <a href="#origins"    class="lamp" data-label="Origins"><span class="lamp__icon" aria-hidden="true">
+      <svg viewBox="0 0 32 64" width="28" height="56" filter="url(#rough)">
+        <!-- 灯光辉光（active 时显） -->
+        <circle class="lamp__halo" cx="16" cy="26" r="15" fill="url(#warm-glow)" opacity="0"/>
+        <!-- 顶部小十字星 + 短杆 -->
+        <g stroke="#a8b0c4" stroke-width="0.65" stroke-linecap="round" fill="none">
+          <path d="M 16 1.6 L 16 4.8 M 14.4 3.2 L 17.6 3.2"/>
+          <line x1="16" y1="4.8" x2="16" y2="8.4"/>
+        </g>
+        <!-- 顶圆珠 -->
+        <circle cx="16" cy="9.6" r="1.05" fill="none" stroke="#a8b0c4" stroke-width="0.6"/>
+        <!-- 钟形灯帽：上层小尖顶 + 帽檐 -->
+        <g stroke="#a8b0c4" stroke-width="0.85" fill="none" stroke-linejoin="round">
+          <path d="M 16 11 L 11.5 17 L 20.5 17 Z"/>
+          <path d="M 10.4 17 L 21.6 17 L 20.6 19 L 11.4 19 Z"/>
+        </g>
+        <!-- 涡卷托架 -->
+        <g stroke="#8a93a8" stroke-width="0.5" fill="none" opacity="0.85">
+          <path d="M 12 19.4 Q 6.6 20.6 7 25.6"/>
+          <path d="M 20 19.4 Q 25.4 20.6 25 25.6"/>
+          <circle cx="7"  cy="25.6" r="0.55"/>
+          <circle cx="25" cy="25.6" r="0.55"/>
+        </g>
+        <!-- 灯笼主体（八边钟形） -->
+        <path d="M 11.5 19 L 20.5 19 L 21 22 L 21 32 L 20 34 L 12 34 L 11 32 L 11 22 Z"
+              fill="none" stroke="#a8b0c4" stroke-width="0.85" stroke-linejoin="round"/>
+        <!-- 玻璃格栅 -->
+        <g stroke="#a8b0c4" stroke-width="0.35" fill="none" opacity="0.55">
+          <line x1="16" y1="19" x2="16" y2="34"/>
+          <line x1="11" y1="26.5" x2="21" y2="26.5"/>
+        </g>
+        <!-- 底部滴水盘 + 铃形垂坠 -->
+        <g stroke="#a8b0c4" stroke-width="0.7" fill="none" stroke-linejoin="round">
+          <path d="M 10 34 L 22 34 L 21 36 L 11 36 Z"/>
+          <line x1="16" y1="36" x2="16" y2="38"/>
+          <path d="M 14.2 38 Q 14 40.4 16 41 Q 18 40.4 17.8 38" stroke-width="0.55"/>
+        </g>
+        <!-- 灯杆 + 中段节饰 -->
+        <line x1="16" y1="41" x2="16" y2="63" stroke="#8a93a8" stroke-width="0.85" stroke-linecap="round"/>
+        <g stroke="#8a93a8" stroke-width="0.5" fill="none">
+          <ellipse cx="16" cy="51" rx="1.6" ry="1.05"/>
+          <line x1="13.6" y1="51" x2="18.4" y2="51" stroke-width="0.35" opacity="0.65"/>
+        </g>
+        <!-- 火焰（active 时显） -->
+        <path class="lamp__flame"
+              d="M 16 22.6 Q 13.6 25.6 13.9 28.8 Q 14.1 31 16 31 Q 17.9 31 18.1 28.8 Q 18.4 25.6 16 22.6 Z"
+              fill="url(#warm-glow)"/>
+      </svg>
+    </span><span class="lamp__txt">Origins</span></a>
+
+    <a href="#selection"  class="lamp" data-label="Selection"><span class="lamp__icon" aria-hidden="true">
+      <svg viewBox="0 0 32 64" width="28" height="56" filter="url(#rough)">
+        <circle class="lamp__halo" cx="16" cy="26" r="15" fill="url(#warm-glow)" opacity="0"/>
+        <g stroke="#a8b0c4" stroke-width="0.65" stroke-linecap="round" fill="none">
+          <path d="M 16 1.6 L 16 4.8 M 14.4 3.2 L 17.6 3.2"/>
+          <line x1="16" y1="4.8" x2="16" y2="8.4"/>
+        </g>
+        <circle cx="16" cy="9.6" r="1.05" fill="none" stroke="#a8b0c4" stroke-width="0.6"/>
+        <g stroke="#a8b0c4" stroke-width="0.85" fill="none" stroke-linejoin="round">
+          <path d="M 16 11 L 11.5 17 L 20.5 17 Z"/>
+          <path d="M 10.4 17 L 21.6 17 L 20.6 19 L 11.4 19 Z"/>
+        </g>
+        <g stroke="#8a93a8" stroke-width="0.5" fill="none" opacity="0.85">
+          <path d="M 12 19.4 Q 6.6 20.6 7 25.6"/>
+          <path d="M 20 19.4 Q 25.4 20.6 25 25.6"/>
+          <circle cx="7"  cy="25.6" r="0.55"/>
+          <circle cx="25" cy="25.6" r="0.55"/>
+        </g>
+        <path d="M 11.5 19 L 20.5 19 L 21 22 L 21 32 L 20 34 L 12 34 L 11 32 L 11 22 Z"
+              fill="none" stroke="#a8b0c4" stroke-width="0.85" stroke-linejoin="round"/>
+        <g stroke="#a8b0c4" stroke-width="0.35" fill="none" opacity="0.55">
+          <line x1="16" y1="19" x2="16" y2="34"/>
+          <line x1="11" y1="26.5" x2="21" y2="26.5"/>
+        </g>
+        <g stroke="#a8b0c4" stroke-width="0.7" fill="none" stroke-linejoin="round">
+          <path d="M 10 34 L 22 34 L 21 36 L 11 36 Z"/>
+          <line x1="16" y1="36" x2="16" y2="38"/>
+          <path d="M 14.2 38 Q 14 40.4 16 41 Q 18 40.4 17.8 38" stroke-width="0.55"/>
+        </g>
+        <line x1="16" y1="41" x2="16" y2="63" stroke="#8a93a8" stroke-width="0.85" stroke-linecap="round"/>
+        <g stroke="#8a93a8" stroke-width="0.5" fill="none">
+          <ellipse cx="16" cy="51" rx="1.6" ry="1.05"/>
+          <line x1="13.6" y1="51" x2="18.4" y2="51" stroke-width="0.35" opacity="0.65"/>
+        </g>
+        <path class="lamp__flame"
+              d="M 16 22.6 Q 13.6 25.6 13.9 28.8 Q 14.1 31 16 31 Q 17.9 31 18.1 28.8 Q 18.4 25.6 16 22.6 Z"
+              fill="url(#warm-glow)"/>
+      </svg>
+    </span><span class="lamp__txt">Selection</span></a>
+
+    <a href="#adaptation" class="lamp" data-label="Adaptation"><span class="lamp__icon" aria-hidden="true">
+      <svg viewBox="0 0 32 64" width="28" height="56" filter="url(#rough)">
+        <circle class="lamp__halo" cx="16" cy="26" r="15" fill="url(#warm-glow)" opacity="0"/>
+        <g stroke="#a8b0c4" stroke-width="0.65" stroke-linecap="round" fill="none">
+          <path d="M 16 1.6 L 16 4.8 M 14.4 3.2 L 17.6 3.2"/>
+          <line x1="16" y1="4.8" x2="16" y2="8.4"/>
+        </g>
+        <circle cx="16" cy="9.6" r="1.05" fill="none" stroke="#a8b0c4" stroke-width="0.6"/>
+        <g stroke="#a8b0c4" stroke-width="0.85" fill="none" stroke-linejoin="round">
+          <path d="M 16 11 L 11.5 17 L 20.5 17 Z"/>
+          <path d="M 10.4 17 L 21.6 17 L 20.6 19 L 11.4 19 Z"/>
+        </g>
+        <g stroke="#8a93a8" stroke-width="0.5" fill="none" opacity="0.85">
+          <path d="M 12 19.4 Q 6.6 20.6 7 25.6"/>
+          <path d="M 20 19.4 Q 25.4 20.6 25 25.6"/>
+          <circle cx="7"  cy="25.6" r="0.55"/>
+          <circle cx="25" cy="25.6" r="0.55"/>
+        </g>
+        <path d="M 11.5 19 L 20.5 19 L 21 22 L 21 32 L 20 34 L 12 34 L 11 32 L 11 22 Z"
+              fill="none" stroke="#a8b0c4" stroke-width="0.85" stroke-linejoin="round"/>
+        <g stroke="#a8b0c4" stroke-width="0.35" fill="none" opacity="0.55">
+          <line x1="16" y1="19" x2="16" y2="34"/>
+          <line x1="11" y1="26.5" x2="21" y2="26.5"/>
+        </g>
+        <g stroke="#a8b0c4" stroke-width="0.7" fill="none" stroke-linejoin="round">
+          <path d="M 10 34 L 22 34 L 21 36 L 11 36 Z"/>
+          <line x1="16" y1="36" x2="16" y2="38"/>
+          <path d="M 14.2 38 Q 14 40.4 16 41 Q 18 40.4 17.8 38" stroke-width="0.55"/>
+        </g>
+        <line x1="16" y1="41" x2="16" y2="63" stroke="#8a93a8" stroke-width="0.85" stroke-linecap="round"/>
+        <g stroke="#8a93a8" stroke-width="0.5" fill="none">
+          <ellipse cx="16" cy="51" rx="1.6" ry="1.05"/>
+          <line x1="13.6" y1="51" x2="18.4" y2="51" stroke-width="0.35" opacity="0.65"/>
+        </g>
+        <path class="lamp__flame"
+              d="M 16 22.6 Q 13.6 25.6 13.9 28.8 Q 14.1 31 16 31 Q 17.9 31 18.1 28.8 Q 18.4 25.6 16 22.6 Z"
+              fill="url(#warm-glow)"/>
+      </svg>
+    </span><span class="lamp__txt">Adaptation</span></a>
+
+    <a href="#rose"       class="lamp" data-label="The Rose"><span class="lamp__icon" aria-hidden="true">
+      <svg viewBox="0 0 32 64" width="28" height="56" filter="url(#rough)">
+        <circle class="lamp__halo" cx="16" cy="26" r="15" fill="url(#rose-glow)" opacity="0"/>
+        <g stroke="#a8b0c4" stroke-width="0.65" stroke-linecap="round" fill="none">
+          <path d="M 16 1.6 L 16 4.8 M 14.4 3.2 L 17.6 3.2"/>
+          <line x1="16" y1="4.8" x2="16" y2="8.4"/>
+        </g>
+        <circle cx="16" cy="9.6" r="1.05" fill="none" stroke="#a8b0c4" stroke-width="0.6"/>
+        <g stroke="#a8b0c4" stroke-width="0.85" fill="none" stroke-linejoin="round">
+          <path d="M 16 11 L 11.5 17 L 20.5 17 Z"/>
+          <path d="M 10.4 17 L 21.6 17 L 20.6 19 L 11.4 19 Z"/>
+        </g>
+        <g stroke="#8a93a8" stroke-width="0.5" fill="none" opacity="0.85">
+          <path d="M 12 19.4 Q 6.6 20.6 7 25.6"/>
+          <path d="M 20 19.4 Q 25.4 20.6 25 25.6"/>
+          <circle cx="7"  cy="25.6" r="0.55"/>
+          <circle cx="25" cy="25.6" r="0.55"/>
+        </g>
+        <path d="M 11.5 19 L 20.5 19 L 21 22 L 21 32 L 20 34 L 12 34 L 11 32 L 11 22 Z"
+              fill="none" stroke="#a8b0c4" stroke-width="0.85" stroke-linejoin="round"/>
+        <g stroke="#a8b0c4" stroke-width="0.35" fill="none" opacity="0.55">
+          <line x1="16" y1="19" x2="16" y2="34"/>
+          <line x1="11" y1="26.5" x2="21" y2="26.5"/>
+        </g>
+        <g stroke="#a8b0c4" stroke-width="0.7" fill="none" stroke-linejoin="round">
+          <path d="M 10 34 L 22 34 L 21 36 L 11 36 Z"/>
+          <line x1="16" y1="36" x2="16" y2="38"/>
+          <path d="M 14.2 38 Q 14 40.4 16 41 Q 18 40.4 17.8 38" stroke-width="0.55"/>
+        </g>
+        <line x1="16" y1="41" x2="16" y2="63" stroke="#8a93a8" stroke-width="0.85" stroke-linecap="round"/>
+        <g stroke="#8a93a8" stroke-width="0.5" fill="none">
+          <ellipse cx="16" cy="51" rx="1.6" ry="1.05"/>
+          <line x1="13.6" y1="51" x2="18.4" y2="51" stroke-width="0.35" opacity="0.65"/>
+        </g>
+        <!-- The Rose: 灯里换成玫瑰色火焰 -->
+        <path class="lamp__flame"
+              d="M 16 22.6 Q 13.6 25.6 13.9 28.8 Q 14.1 31 16 31 Q 17.9 31 18.1 28.8 Q 18.4 25.6 16 22.6 Z"
+              fill="url(#rose-glow)"/>
+      </svg>
+    </span><span class="lamp__txt">The Rose</span></a>
+  </nav>
+
+  <!-- 主体内容 -->
+  <main id="scroller">
+
+    <!-- Section 1: Origins -->
+    <section id="origins" class="section section--origins">
+      <!-- 小王子：随页面滚动 -->
+      <div id="little-prince" class="prince" aria-hidden="true">
+        <img class="prince__img" src="assets/little-prince.png" alt="" draggable="false">
+      </div>
+      <div class="section__inner origins__inner">
+        <h1 class="title">Mu's Planet</h1>
+        <p class="slogan">From Brownian noise to bounded rationality.</p>
+        <p class="identity">
+          <span class="identity__en">PhD Researcher, SUSTech Business School</span>
+        </p>
+        <ul class="chips">
+          <li>Game Theory</li>
+          <li>Behavioral &amp; Experimental Economics</li>
+          <li>Belief Updating</li>
+          <li>Bayesian Inference</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Section 2: Selection -->
+    <section id="selection" class="section section--selection">
+      <div class="section__inner">
+        <header class="section__head">
+          <span class="section__num">02</span>
+          <h2 class="section__title">Selection</h2>
+        </header>
+
+        <div class="selection-shelf">
+
+          <section class="selection-group">
+            <header class="selection-group__head">
+              <span class="selection-group__roman">i.</span>
+              <span class="selection-group__label">Working Papers</span>
+              <span class="selection-group__zh">工 作 论 文</span>
+              <span class="selection-group__rule" aria-hidden="true"></span>
+            </header>
+            <ol class="selection-list">
+              <li class="selection-entry">
+                <div class="selection-entry__topline">
+                  <span class="selection-entry__authors">Mu, Xi.</span>
+                  <span class="selection-entry__date">mmxxvi · draft</span>
+                </div>
+                <h3 class="selection-entry__title">Belief updating under ambiguous signals</h3>
+                <p class="selection-entry__venue">Working paper · <em>SUSTech School of Business</em></p>
+                <p class="selection-entry__abs">占位摘要：本研究采用受控实验考察被试在模糊信号下的信念更新偏差——尤其在先验异质、信号噪声未知的情境中，被试更倾向系统性低估，而非传统理论所预测的均值回归。</p>
+              </li>
+
+              <li class="selection-entry">
+                <div class="selection-entry__topline">
+                  <span class="selection-entry__authors">Mu, Xi. &amp; <em>Coauthor, Y.</em></span>
+                  <span class="selection-entry__date">mmxxvi · in prep.</span>
+                </div>
+                <h3 class="selection-entry__title">Social learning in coordination games</h3>
+                <p class="selection-entry__venue">Manuscript in preparation</p>
+                <p class="selection-entry__abs">占位摘要：通过 oTree 部署的多轮协调博弈实验，考察被试在他人选择可观测条件下的信念聚合速度——以及当观测延迟人为引入时，level-k 推断如何分布。</p>
+              </li>
+            </ol>
+          </section>
+
+          <section class="selection-group">
+            <header class="selection-group__head">
+              <span class="selection-group__roman">ii.</span>
+              <span class="selection-group__label">Publications</span>
+              <span class="selection-group__zh">已 发 表</span>
+              <span class="selection-group__rule" aria-hidden="true"></span>
+            </header>
+            <ol class="selection-list">
+              <li class="selection-entry">
+                <div class="selection-entry__topline">
+                  <span class="selection-entry__authors">Mu, Xi. &amp; <em>Coauthor, Y.</em> (2025).</span>
+                  <span class="selection-entry__date">mmxxv</span>
+                </div>
+                <h3 class="selection-entry__title">Placeholder title of a published paper</h3>
+                <p class="selection-entry__venue"><em>Journal Name</em>, 12(3), 45–67. <a href="#">doi:placeholder</a></p>
+                <p class="selection-entry__abs">占位摘要：待你后续填入真实发表论文的简介——三五行最佳，作为标本的"说明卡"，让读者三秒判断要不要细读全文。</p>
+              </li>
+            </ol>
+          </section>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Adaptation -->
+    <section id="adaptation" class="section section--adaptation">
+      <div class="section__inner">
+        <header class="section__head">
+          <span class="section__num">03</span>
+          <h2 class="section__title">Adaptation</h2>
+          <p class="section__sub">进化 / 繁衍 —— 学习与思考的输出</p>
+        </header>
+
+        <ol class="adapt-index">
+          <li class="adapt-entry">
+            <a class="adapt-entry__link" href="articles/adaptation-1.html">
+              <div class="adapt-entry__rule" aria-hidden="true">
+                <span class="adapt-entry__num">N<sup>o</sup>&nbsp;01</span>
+                <span class="adapt-entry__line"></span>
+                <span class="adapt-entry__meta">Experimental Econ <span class="dot">·</span> mmxxvi <span class="dot">·</span> iv</span>
+              </div>
+              <h3 class="adapt-entry__title">信念更新实验中的一个常见误用</h3>
+              <p class="adapt-entry__excerpt">从一篇被审稿人退回的实验记录出发，谈贝叶斯更新在异质先验下的若干陷阱——以及为什么 "subjects misperceive base rates" 这句结论几乎总是不够。</p>
+              <span class="adapt-entry__cta">read on <span class="arr">→</span></span>
+            </a>
+          </li>
+
+          <li class="adapt-entry">
+            <a class="adapt-entry__link" href="articles/adaptation-2.html">
+              <div class="adapt-entry__rule" aria-hidden="true">
+                <span class="adapt-entry__num">N<sup>o</sup>&nbsp;02</span>
+                <span class="adapt-entry__line"></span>
+                <span class="adapt-entry__meta">oTree <span class="dot">·</span> mmxxvi <span class="dot">·</span> iii</span>
+              </div>
+              <h3 class="adapt-entry__title">用 oTree 搭一个多轮协调博弈的最小骨架</h3>
+              <p class="adapt-entry__excerpt">从空模板到能跑通 4 人 10 轮的实验，要踩哪些坑——Page 顺序、WaitPage、Heroku 部署清单，一份给自己未来用的清单。</p>
+              <span class="adapt-entry__cta">read on <span class="arr">→</span></span>
+            </a>
+          </li>
+
+          <li class="adapt-entry">
+            <a class="adapt-entry__link" href="articles/adaptation-3.html">
+              <div class="adapt-entry__rule" aria-hidden="true">
+                <span class="adapt-entry__num">N<sup>o</sup>&nbsp;03</span>
+                <span class="adapt-entry__line"></span>
+                <span class="adapt-entry__meta">Workflow <span class="dot">·</span> mmxxvi <span class="dot">·</span> ii</span>
+              </div>
+              <h3 class="adapt-entry__title">Claude Code 在实验经济学项目里的工作流</h3>
+              <p class="adapt-entry__excerpt">从 Stata 数据清洗到 LaTeX 投稿稿，哪些环节适合交给终端 agent，哪些必须自己来——一份分工边界的草图。</p>
+              <span class="adapt-entry__cta">read on <span class="arr">→</span></span>
+            </a>
+          </li>
+
+          <li class="adapt-entry">
+            <a class="adapt-entry__link" href="articles/adaptation-4.html">
+              <div class="adapt-entry__rule" aria-hidden="true">
+                <span class="adapt-entry__num">N<sup>o</sup>&nbsp;04</span>
+                <span class="adapt-entry__line"></span>
+                <span class="adapt-entry__meta">Reading Note <span class="dot">·</span> mmxxvi <span class="dot">·</span> i</span>
+              </div>
+              <h3 class="adapt-entry__title">读 Camerer《Behavioral Game Theory》第 3 章札记</h3>
+              <p class="adapt-entry__excerpt">level-k 模型与认知层级的实验证据，以及它对我自己设计博弈实验时的两点启发——尤其关于"参与者怎样猜对手"。</p>
+              <span class="adapt-entry__cta">read on <span class="arr">→</span></span>
+            </a>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Section 4: The Rose -->
+    <section id="rose" class="section section--rose">
+      <div class="section__inner rose__inner">
+        <header class="section__head rose__head">
+          <span class="section__num">04</span>
+          <h2 class="section__title">The Rose</h2>
+          <p class="section__sub">玫瑰 / 守望 —— 科研之外的锚点</p>
+        </header>
+
+        <ol class="rose-journal">
+          <li class="rose-entry">
+            <a href="articles/rose-1.html" class="rose-entry__link">
+              <span class="rose-entry__date" aria-hidden="true">
+                <span class="rose-entry__day">12</span>
+                <span class="rose-entry__mon">May</span>
+                <span class="rose-entry__yr">MMXXVI</span>
+              </span>
+              <span class="rose-entry__body">
+                <span class="rose-entry__title">文竹的新枝</span>
+                <span class="rose-entry__hint">—— 关于等待</span>
+              </span>
+            </a>
+          </li>
+          <li class="rose-entry">
+            <a href="articles/rose-2.html" class="rose-entry__link">
+              <span class="rose-entry__date" aria-hidden="true">
+                <span class="rose-entry__day">07</span>
+                <span class="rose-entry__mon">Apr</span>
+                <span class="rose-entry__yr">MMXXVI</span>
+              </span>
+              <span class="rose-entry__body">
+                <span class="rose-entry__title">八段锦第三式做得不够沉</span>
+                <span class="rose-entry__hint">—— 关于身体</span>
+              </span>
+            </a>
+          </li>
+          <li class="rose-entry">
+            <a href="articles/rose-3.html" class="rose-entry__link">
+              <span class="rose-entry__date" aria-hidden="true">
+                <span class="rose-entry__day">23</span>
+                <span class="rose-entry__mon">Mar</span>
+                <span class="rose-entry__yr">MMXXVI</span>
+              </span>
+              <span class="rose-entry__body">
+                <span class="rose-entry__title">雨夜重读《小王子》</span>
+                <span class="rose-entry__hint">—— 关于一只羊的形状</span>
+              </span>
+            </a>
+          </li>
+          <li class="rose-entry">
+            <a href="articles/rose-4.html" class="rose-entry__link">
+              <span class="rose-entry__date" aria-hidden="true">
+                <span class="rose-entry__day">05</span>
+                <span class="rose-entry__mon">Feb</span>
+                <span class="rose-entry__yr">MMXXVI</span>
+              </span>
+              <span class="rose-entry__body">
+                <span class="rose-entry__title">深圳的冬天没有冬天</span>
+                <span class="rose-entry__hint">—— 关于一个北方人的迁徙</span>
+              </span>
+            </a>
+          </li>
+        </ol>
+
+        <figure class="rose-quote-pull">
+          <svg class="rose-quote__rule" viewBox="0 0 240 8" aria-hidden="true">
+            <path d="M 2 4 Q 60 2 120 4 T 238 4" fill="none" stroke="currentColor" stroke-width="0.6" stroke-linecap="round" opacity="0.5"/>
+          </svg>
+          <blockquote>
+            "使你的玫瑰变得如此重要的，<br>
+            是你为它所花费的时间。"
+          </blockquote>
+          <figcaption>— Saint-Exupéry</figcaption>
+        </figure>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 星际终端 (按反引号 ` 呼出) -->
+  <div id="terminal" class="terminal" hidden aria-label="Interactive console">
+    <div class="terminal__bar">
+      <span class="terminal__title">mu-planet · interactive console</span>
+      <span class="terminal__hint">按 ` 收起</span>
+    </div>
+    <div id="terminal-log" class="terminal__log" role="log" aria-live="polite"></div>
+    <div class="terminal__row">
+      <span class="terminal__prompt">mu@planet:~$</span>
+      <input id="terminal-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="off">
+    </div>
+  </div>
+
+  <script src="main.js" defer></script>
+</body>
+</html>
